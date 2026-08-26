@@ -1,18 +1,19 @@
 package com.smartclinic.api.service;
 
+import com.smartclinic.api.dto.AppointmentResponseDTO;
 import com.smartclinic.api.model.Appointment;
 import com.smartclinic.api.repository.AppointmentRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
 
-    // Inyección de dependencias por constructor
     public AppointmentService(AppointmentRepository appointmentRepository) {
         this.appointmentRepository = appointmentRepository;
     }
@@ -20,7 +21,7 @@ public class AppointmentService {
     /**
      * Agendar un nuevo turno aplicando validaciones de negocio.
      */
-    public Appointment scheduleAppointment(Long patientId, Long doctorId, LocalDateTime appointmentDate, String reason) {
+    public AppointmentResponseDTO scheduleAppointment(Long patientId, Long doctorId, LocalDateTime appointmentDate, String reason) {
 
         // 1. Validar que la fecha elegida sea en el futuro
         if (appointmentDate.isBefore(LocalDateTime.now())) {
@@ -42,14 +43,34 @@ public class AppointmentService {
                 .status(Appointment.Status.PENDING)
                 .build();
 
-        // 4. Guardar en PostgreSQL a través del repositorio
-        return appointmentRepository.save(appointment);
+        // 4. Guardar en la base de datos
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+
+        // 5. Retornar DTO de respuesta
+        return mapToDTO(savedAppointment);
     }
 
     /**
-     * Obtener el historial de turnos de un paciente.
+     * Obtener el historial de turnos de un paciente mapeado a DTOs.
      */
-    public List<Appointment> getAppointmentsByPatient(Long patientId) {
-        return appointmentRepository.findByPatientId(patientId);
+    public List<AppointmentResponseDTO> getAppointmentsByPatient(Long patientId) {
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        return appointments.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Método mapeador privado: Convierte una entidad Appointment a DTO.
+     */
+    private AppointmentResponseDTO mapToDTO(Appointment appointment) {
+        AppointmentResponseDTO dto = new AppointmentResponseDTO();
+        dto.setId(appointment.getId());
+        dto.setPatientId(appointment.getPatientId());
+        dto.setDoctorId(appointment.getDoctorId());
+        dto.setAppointmentDate(appointment.getAppointmentDate());
+        dto.setReason(appointment.getReason());
+        dto.setStatus(appointment.getStatus().name());
+        return dto;
     }
 }
