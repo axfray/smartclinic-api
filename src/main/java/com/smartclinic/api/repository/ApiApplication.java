@@ -1,4 +1,4 @@
-package com.smartclinic.api;
+package com.smartclinic.api.repository;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
