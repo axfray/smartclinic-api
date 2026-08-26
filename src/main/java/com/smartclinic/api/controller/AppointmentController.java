@@ -19,29 +19,17 @@ public class AppointmentController {
         this.appointmentService = appointmentService;
     }
 
-    /**
-     * Endpoint para reservar un nuevo turno
-     * POST http://localhost:8080/api/appointments
-     */
     @PostMapping
-    public ResponseEntity<?> scheduleAppointment(@RequestBody AppointmentRequestDTO dto) {
-        try {
-            AppointmentResponseDTO response = appointmentService.scheduleAppointment(
-                    dto.getPatientId(),
-                    dto.getDoctorId(),
-                    dto.getAppointmentDate(),
-                    dto.getReason()
-            );
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<AppointmentResponseDTO> scheduleAppointment(@RequestBody AppointmentRequestDTO dto) {
+        AppointmentResponseDTO response = appointmentService.scheduleAppointment(
+                dto.getPatientId(),
+                dto.getDoctorId(),
+                dto.getAppointmentDate(),
+                dto.getReason()
+        );
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint para consultar turnos por paciente
-     * GET http://localhost:8080/api/appointments/patient/{patientId}
-     */
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByPatient(@PathVariable Long patientId) {
         List<AppointmentResponseDTO> response = appointmentService.getAppointmentsByPatient(patientId);
