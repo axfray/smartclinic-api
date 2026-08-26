@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+/target/
+.classpath
+.project
+.settings/
+.factorypath
+.idea/
+*.iml
