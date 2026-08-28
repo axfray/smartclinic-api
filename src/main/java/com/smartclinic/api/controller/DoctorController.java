@@ -5,8 +5,10 @@ import com.smartclinic.api.dto.DoctorResponseDTO;
 import com.smartclinic.api.dto.DoctorScheduleRequestDTO;
 import com.smartclinic.api.dto.DoctorScheduleResponseDTO;
 import com.smartclinic.api.service.DoctorService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +24,8 @@ public class DoctorController {
     }
 
     @PostMapping
-    public ResponseEntity<DoctorResponseDTO> createDoctor(@RequestBody DoctorRequestDTO dto) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DoctorResponseDTO> createDoctor(@Valid @RequestBody DoctorRequestDTO dto) {
         DoctorResponseDTO response = doctorService.createDoctor(dto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -38,7 +41,8 @@ public class DoctorController {
     }
 
     @PostMapping("/schedules")
-    public ResponseEntity<DoctorScheduleResponseDTO> addSchedule(@RequestBody DoctorScheduleRequestDTO dto) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DoctorScheduleResponseDTO> addSchedule(@Valid @RequestBody DoctorScheduleRequestDTO dto) {
         DoctorScheduleResponseDTO response = doctorService.addSchedule(dto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }

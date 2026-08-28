@@ -9,7 +9,7 @@ API RESTful para la gestión integral de turnos médicos y sincronización de pa
 - **Lenguaje:** Java 21
 - **Framework:** Spring Boot 3.2.3
 - **Persistencia:** Spring Data JPA + PostgreSQL
-- **Seguridad:** Spring Security (configuración abierta, sin autenticación real aún)
+- **Seguridad:** Spring Security + JWT (jjwt). Acceso por roles con `@PreAuthorize` y `@EnableMethodSecurity`
 - **Documentación:** SpringDoc OpenAPI (Swagger UI en `/swagger-ui/index.html`)
 - **Build Tool:** Maven (wrapper incluido)
 - **Librería:** Lombok
@@ -22,15 +22,23 @@ Arquitectura en capas (Layered Architecture) bajo el package `com.smartclinic.ap
 com.smartclinic.api/
 ├── ApiApplication.java              # Entry point
 ├── config/
-│   └── SecurityConfig.java          # Configuración de Spring Security
+│   ├── SecurityConfig.java          # Configuración de Spring Security (JWT + stateless)
+│   ├── BeansConfig.java             # Beans (PasswordEncoder)
+│   └── DataSeeder.java              # Crea el usuario admin inicial si no existe
+├── security/
+│   ├── JwtUtil.java                 # Generación/validación de tokens JWT
+│   ├── JwtAuthenticationFilter.java # Filtro que autentica cada request con el token
+│   └── CustomUserDetailsService.java# Carga el usuario por email para Spring Security
 ├── controller/
 │   ├── AppointmentController.java   # Turnos
+│   ├── AuthController.java          # Login (POST /api/auth/login)
 │   ├── UserController.java          # Usuarios
 │   ├── DoctorController.java        # Médicos + horarios
 │   ├── SpecialtyController.java     # Especialidades
 │   └── MedicalRecordController.java # Historial clínico
 ├── service/
 │   ├── AppointmentService.java      # Lógica de turnos
+│   ├── AuthService.java             # Lógica de autenticación
 │   ├── UserService.java             # Lógica de usuarios
 │   ├── DoctorService.java           # Lógica de médicos y horarios
 │   ├── SpecialtyService.java        # Lógica de especialidades
@@ -61,8 +69,10 @@ com.smartclinic.api/
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
+| POST | `/api/auth/login` | Login JWT (200) |
 | POST | `/api/appointments` | Agenda un nuevo turno (201) |
 | GET | `/api/appointments/patient/{patientId}` | Turnos de un paciente (200) |
+| PATCH | `/api/appointments/{id}/status` | Cambia estado de un turno (200) |
 | POST | `/api/users` | Crea un usuario (201) |
 | GET | `/api/users` | Lista usuarios (200) |
 | GET | `/api/users/{id}` | Usuario por id (200) |
@@ -128,7 +138,7 @@ Notas de mapeo:
 
 ## Notas Importantes
 
-1. **Seguridad abierta:** `SecurityConfig` tiene todos los endpoints como `permitAll()`. Sin autenticación real aún.
+1. **Seguridad JWT:** `SecurityConfig` protege todo `/api/**` (excepto `/api/auth/**` y Swagger) y valida tokens JWT con roles vía `@PreAuthorize`. `DataSeeder` crea el admin inicial (`ADMIN_EMAIL`/`ADMIN_PASSWORD`, defaults `admin@smartclinic.local`/`admin123`).
 2. **`ddl-auto=update`:** Hibernate puede alterar el esquema (p.ej. cambiar tipos de columna) al arrancar.
-3. **Tests unitarios:** Existen tests unitarios para los 5 services (Appointment, User, Doctor, Specialty, MedicalRecord) usando Mockito. Solo el test de contexto (`contextLoads`) conecta a la base PostgreSQL real.
+3. **Tests unitarios:** Existen tests unitarios para los services (Appointment, User, Doctor, Specialty, MedicalRecord, Auth) y JwtUtil usando Mockito. Solo el test de contexto (`contextLoads`) conecta a la base PostgreSQL real.
 4. **Swagger disponible:** Documentación OpenAPI en `/swagger-ui/index.html` cuando la app está corriendo.

@@ -3,8 +3,10 @@ package com.smartclinic.api.controller;
 import com.smartclinic.api.dto.SpecialtyRequestDTO;
 import com.smartclinic.api.dto.SpecialtyResponseDTO;
 import com.smartclinic.api.service.SpecialtyService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +22,8 @@ public class SpecialtyController {
     }
 
     @PostMapping
-    public ResponseEntity<SpecialtyResponseDTO> createSpecialty(@RequestBody SpecialtyRequestDTO dto) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SpecialtyResponseDTO> createSpecialty(@Valid @RequestBody SpecialtyRequestDTO dto) {
         SpecialtyResponseDTO response = specialtyService.createSpecialty(dto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -36,6 +39,7 @@ public class SpecialtyController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSpecialty(@PathVariable Long id) {
         specialtyService.deleteSpecialty(id);
         return ResponseEntity.noContent().build();

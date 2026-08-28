@@ -3,8 +3,10 @@ package com.smartclinic.api.controller;
 import com.smartclinic.api.dto.MedicalRecordRequestDTO;
 import com.smartclinic.api.dto.MedicalRecordResponseDTO;
 import com.smartclinic.api.service.MedicalRecordService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +22,14 @@ public class MedicalRecordController {
     }
 
     @PostMapping
-    public ResponseEntity<MedicalRecordResponseDTO> createRecord(@RequestBody MedicalRecordRequestDTO dto) {
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<MedicalRecordResponseDTO> createRecord(@Valid @RequestBody MedicalRecordRequestDTO dto) {
         MedicalRecordResponseDTO response = medicalRecordService.createRecord(dto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     public ResponseEntity<List<MedicalRecordResponseDTO>> getAllRecords() {
         return ResponseEntity.ok(medicalRecordService.getAllRecords());
     }
