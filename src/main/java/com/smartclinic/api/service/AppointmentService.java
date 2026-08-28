@@ -2,7 +2,11 @@ package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.AppointmentResponseDTO;
 import com.smartclinic.api.model.Appointment;
+import com.smartclinic.api.model.Doctor;
+import com.smartclinic.api.model.User;
 import com.smartclinic.api.repository.AppointmentRepository;
+import com.smartclinic.api.repository.DoctorRepository;
+import com.smartclinic.api.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,9 +17,15 @@ import java.util.stream.Collectors;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final UserRepository userRepository;
+    private final DoctorRepository doctorRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository) {
+    public AppointmentService(AppointmentRepository appointmentRepository,
+                              UserRepository userRepository,
+                              DoctorRepository doctorRepository) {
         this.appointmentRepository = appointmentRepository;
+        this.userRepository = userRepository;
+        this.doctorRepository = doctorRepository;
     }
 
     /**
@@ -67,10 +77,29 @@ public class AppointmentService {
         AppointmentResponseDTO dto = new AppointmentResponseDTO();
         dto.setId(appointment.getId());
         dto.setPatientId(appointment.getPatientId());
+        dto.setPatientName(resolvePatientName(appointment.getPatientId()));
         dto.setDoctorId(appointment.getDoctorId());
+        dto.setDoctorName(resolveDoctorName(appointment.getDoctorId()));
         dto.setAppointmentDate(appointment.getAppointmentDate());
         dto.setReason(appointment.getReason());
         dto.setStatus(appointment.getStatus().name());
         return dto;
+    }
+
+    private String resolvePatientName(Long patientId) {
+        return userRepository.findById(patientId)
+                .map(this::fullName)
+                .orElse(null);
+    }
+
+    private String resolveDoctorName(Long doctorId) {
+        return doctorRepository.findById(doctorId)
+                .map(Doctor::getUser)
+                .map(this::fullName)
+                .orElse(null);
+    }
+
+    private String fullName(User user) {
+        return (user.getFirstName() + " " + user.getLastName()).trim();
     }
 }
