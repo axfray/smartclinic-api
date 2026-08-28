@@ -46,7 +46,19 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     public ResponseEntity<AppointmentResponseDTO> updateStatus(@PathVariable Long id,
                                                                @Valid @RequestBody AppointmentStatusRequestDTO dto) {
-        Appointment.Status status = Appointment.Status.valueOf(dto.getStatus());
+        Appointment.Status status = parseStatus(dto.getStatus());
         return ResponseEntity.ok(appointmentService.updateAppointmentStatus(id, status));
+    }
+
+    static Appointment.Status parseStatus(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("El estado es obligatorio.");
+        }
+        try {
+            return Appointment.Status.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "Estado inválido. Valores válidos: PENDING, CONFIRMED, CANCELLED, COMPLETED.", ex);
+        }
     }
 }

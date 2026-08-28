@@ -91,4 +91,20 @@ class AuthServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> authService.login(dto));
     }
+
+    @Test
+    void login_shouldThrow_whenEmailNull() {
+        LoginRequestDTO dto = new LoginRequestDTO();
+        dto.setPassword("admin123");
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(dto));
+    }
+
+    @Test
+    void login_shouldThrow_whenPasswordNull() {
+        LoginRequestDTO dto = new LoginRequestDTO();
+        dto.setEmail("admin@smartclinic.local");
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(dto));
+    }
 }

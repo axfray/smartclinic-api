@@ -40,6 +40,17 @@ public class AppointmentService {
      */
     public AppointmentResponseDTO scheduleAppointment(Long patientId, Long doctorId, LocalDateTime appointmentDate, String reason) {
 
+        // 0. Validar que los datos obligatorios no sean nulos
+        if (patientId == null) {
+            throw new IllegalArgumentException("El patientId es obligatorio.");
+        }
+        if (doctorId == null) {
+            throw new IllegalArgumentException("El doctorId es obligatorio.");
+        }
+        if (appointmentDate == null) {
+            throw new IllegalArgumentException("La fecha del turno es obligatoria.");
+        }
+
         // 1. Validar que la fecha elegida sea en el futuro
         if (appointmentDate.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("No se puede agendar un turno para una fecha u hora pasada.");
@@ -81,6 +92,13 @@ public class AppointmentService {
      * Actualizar el estado de un turno (confirmar, cancelar, completar).
      */
     public AppointmentResponseDTO updateAppointmentStatus(Long appointmentId, Appointment.Status status) {
+        if (appointmentId == null) {
+            throw new IllegalArgumentException("El id del turno es obligatorio.");
+        }
+        if (status == null) {
+            throw new IllegalArgumentException("El estado es obligatorio.");
+        }
+
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Turno no encontrado con id: " + appointmentId));
 
@@ -139,7 +157,7 @@ public class AppointmentService {
         dto.setDoctorName(resolveDoctorName(appointment.getDoctorId()));
         dto.setAppointmentDate(appointment.getAppointmentDate());
         dto.setReason(appointment.getReason());
-        dto.setStatus(appointment.getStatus().name());
+        dto.setStatus(appointment.getStatus() != null ? appointment.getStatus().name() : null);
         return dto;
     }
 

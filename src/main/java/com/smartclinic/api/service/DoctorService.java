@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class DoctorService {
@@ -105,8 +107,10 @@ public class DoctorService {
         dto.setId(doctor.getId());
         if (doctor.getUser() != null) {
             dto.setUserId(doctor.getUser().getId());
-            String name = doctor.getUser().getFirstName() + " " + doctor.getUser().getLastName();
-            dto.setDoctorName(name.trim());
+            String name = Stream.of(doctor.getUser().getFirstName(), doctor.getUser().getLastName())
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(" "));
+            dto.setDoctorName(name);
         }
         dto.setLicenseNumber(doctor.getLicenseNumber());
         if (doctor.getSpecialty() != null) {

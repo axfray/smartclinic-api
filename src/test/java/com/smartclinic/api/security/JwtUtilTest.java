@@ -41,13 +41,26 @@ class JwtUtilTest {
         assertFalse(jwtUtil.validateToken("token-invalido"));
     }
 
+    @Test
+    void init_shouldThrow_whenSecretTooShort() throws Exception {
+        JwtUtil shortSecretJwt = new JwtUtil();
+        setField(shortSecretJwt, "secret", "corto");
+        setField(shortSecretJwt, "expirationMs", 86400000L);
+
+        assertThrows(IllegalStateException.class, shortSecretJwt::init);
+    }
+
     private void setField(String name, Object value) throws NoSuchFieldException, IllegalAccessException {
+        setField(jwtUtil, name, value);
+    }
+
+    private void setField(JwtUtil target, String name, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field field = JwtUtil.class.getDeclaredField(name);
         field.setAccessible(true);
         if (value instanceof Long) {
-            field.setLong(jwtUtil, (Long) value);
+            field.setLong(target, (Long) value);
         } else {
-            field.set(jwtUtil, value);
+            field.set(target, value);
         }
     }
 }

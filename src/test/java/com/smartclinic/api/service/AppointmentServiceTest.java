@@ -51,6 +51,24 @@ class AppointmentServiceTest {
     }
 
     @Test
+    void scheduleAppointment_shouldThrow_whenPatientIdNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.scheduleAppointment(null, 1L, LocalDateTime.now().plusDays(1), "Consulta"));
+    }
+
+    @Test
+    void scheduleAppointment_shouldThrow_whenDoctorIdNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.scheduleAppointment(1L, null, LocalDateTime.now().plusDays(1), "Consulta"));
+    }
+
+    @Test
+    void scheduleAppointment_shouldThrow_whenAppointmentDateNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.scheduleAppointment(1L, 1L, null, "Consulta"));
+    }
+
+    @Test
     void scheduleAppointment_shouldThrow_whenPatientDoesNotExist() {
         LocalDateTime future = LocalDateTime.now().plusDays(1);
         when(userRepository.existsById(1L)).thenReturn(false);
@@ -154,6 +172,35 @@ class AppointmentServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> appointmentService.updateAppointmentStatus(99L, Appointment.Status.CONFIRMED));
+    }
+
+    @Test
+    void updateAppointmentStatus_shouldThrow_whenAppointmentIdNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.updateAppointmentStatus(null, Appointment.Status.CONFIRMED));
+    }
+
+    @Test
+    void updateAppointmentStatus_shouldThrow_whenStatusNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.updateAppointmentStatus(10L, null));
+    }
+
+    @Test
+    void getAppointmentsByPatient_shouldHandleNullStatus() {
+        Appointment appointment = Appointment.builder()
+                .id(1L)
+                .patientId(5L)
+                .doctorId(1L)
+                .appointmentDate(LocalDateTime.now().plusDays(1))
+                .status(null)
+                .build();
+        when(appointmentRepository.findByPatientId(5L)).thenReturn(List.of(appointment));
+
+        List<AppointmentResponseDTO> result = appointmentService.getAppointmentsByPatient(5L);
+
+        assertEquals(1, result.size());
+        assertNull(result.get(0).getStatus());
     }
 
     @Test

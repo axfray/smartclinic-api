@@ -22,6 +22,11 @@ public class AuthService {
     }
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
+        if (dto == null || dto.getEmail() == null || dto.getEmail().isBlank()
+                || dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Credenciales inválidas.");
+        }
+
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas."));
 

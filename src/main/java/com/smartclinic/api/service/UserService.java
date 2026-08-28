@@ -60,8 +60,12 @@ public class UserService {
             throw new IllegalArgumentException("Ya existe un usuario con ese email.");
         }
 
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
+        if (dto.getFirstName() != null) {
+            user.setFirstName(dto.getFirstName());
+        }
+        if (dto.getLastName() != null) {
+            user.setLastName(dto.getLastName());
+        }
         if (dto.getEmail() != null) {
             user.setEmail(dto.getEmail());
         }
