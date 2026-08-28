@@ -1,7 +1,9 @@
 # Nombre de la aplicación
 spring.application.name=smartclinic-api
 
-# Configuración de PostgreSQL (usa variables de entorno; define DB_USERNAME y DB_PASSWORD)
+# Configuración de PostgreSQL
+# Copia este archivo a application.properties y define las variables de entorno
+# DB_URL, DB_USERNAME y DB_PASSWORD para tus credenciales locales.
 spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/smartclinic_db}
 spring.datasource.username=${DB_USERNAME:postgres}
 spring.datasource.password=${DB_PASSWORD:}
