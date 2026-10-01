@@ -14,6 +14,6 @@
 - Hecho cuando: `GlobalExceptionHandler` mapea `NoResourceFoundException` a 404 y el test de integración pasa.
 - [x] **T7. Swagger no público en prod.** RF-6
 - Hecho cuando: `SecurityConfig` permite las rutas de Swagger solo con `springdoc.swagger-ui.enabled=true`.
-- [ ] **T5. Validación end-to-end.** RF-1..RF-8
-- Hecho cuando: `./mvnw test` en verde y health 200; en Render, health 200, login 200 y Swagger 404 en `prod`.
-- Nota: verificación local hecha (56 tests verdes + arranque `prod` con `DATABASE_URL`); falta el deploy real en Render.
+- [x] **T5. Validación end-to-end.** RF-1..RF-8
+- Hecho cuando: `./mvnw test` en verde y health 200; en Render, health 200, login 200 y Swagger 401/404 en `prod`.
+- Validado: 57 tests verdes; en Render `api-docs=401`, `auth-inexistente=404`, `health=200`, `specialties` sin token `401` y login `200` con token.

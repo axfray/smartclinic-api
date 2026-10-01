@@ -19,6 +19,6 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - Los archivos de perfil van en `src/main/resources/`, no dentro de `db/migration/`.
 
 ## Próximos pasos
-- Verificar post-deploy en Render: `/v3/api-docs` 401, `/api/auth/x` 404 y health 200.
 - Ajustar `CORS_ALLOWED_ORIGINS` cuando exista el frontend.
 - Implementar `specs/001-paginacion-listados/`.
+- Opcional: subir `actions/checkout` y `actions/setup-java` a v5 (CI avisa deprecación) y desactivar `spring.jpa.open-in-view`.
