@@ -16,6 +16,6 @@
 - Hecho cuando: gestiona usuarios, especialidades, médicos y horarios, y ve todos los turnos.
 - [x] **T8. UI médico.** RF-6
 - Hecho cuando: ve su agenda, cambia estados y carga/consulta historial.
-- [ ] **T9. Validación y despliegue.** RF-1..RF-9
+- [x] **T9. Validación y despliegue.** RF-1..RF-9
 - Hecho cuando: `./mvnw test` verde; en Render `GET /` carga la UI y los flujos por rol funcionan.
-- Nota: 69 tests verdes en local; falta verificar `GET /` en Render tras el deploy.
+- Validado: 69 tests verdes; en Render `GET /`=200, estáticos 200, `/api/auth/me` sin token=401 y `/v3/api-docs`=401.
