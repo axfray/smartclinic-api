@@ -13,10 +13,10 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:smartclinic-api-secret-key-change-me-in-prod-please-0123456789}")
+    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration-ms:86400000}")
+    @Value("${jwt.expiration-ms}")
     private long expirationMs;
 
     private SecretKey key;

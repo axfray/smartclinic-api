@@ -7,17 +7,21 @@ API RESTful desarrollada con **Spring Boot** y **PostgreSQL** para la gestión i
 ## 🛠️ Tecnologías Utilizadas
 
 * **Lenguaje:** Java 21
-* **Framework:** Spring Boot 3 (Spring Data JPA, Spring Security, Spring Web)
+* **Framework:** Spring Boot 3.2 (Spring Data JPA, Spring Security, Spring Web)
 * **Seguridad:** JWT (jjwt) + Spring Security con roles
 * **Base de Datos:** PostgreSQL
+* **Migraciones:** Flyway
+* **Observabilidad:** Spring Boot Actuator (`/actuator/health`, `/actuator/info`)
 * **Documentación:** OpenAPI / Swagger UI (`/swagger-ui/index.html`)
 * **Build Tool:** Maven
+* **Contenedores:** Docker + Docker Compose
+* **Tests:** JUnit 5 + Mockito + Testcontainers (PostgreSQL real)
 
 ---
 
 ## 🔐 Autenticación (JWT)
 
-La API está protegida por JWT. Todos los endpoints de `/api/**` requieren un token válido, salvo `/api/auth/**` (login) y Swagger.
+La API está protegida por JWT. Todos los endpoints de `/api/**` requieren un token válido, salvo `/api/auth/**` (login), Swagger y `/actuator/health`.
 
 ### Login
 
@@ -42,6 +46,8 @@ Respuesta `200 OK`:
 }
 ```
 
+Credenciales inválidas → `401 Unauthorized`. Usuario desactivado → `403 Forbidden`.
+
 ### Uso del token
 
 Enviar el token en el header `Authorization` de cada request:
@@ -54,13 +60,13 @@ Authorization: Bearer <token>
 
 * `ROLE_ADMIN` — administra usuarios, médicos, especialidades y estados de turnos.
 * `ROLE_DOCTOR` — agenda horarios, registra historial clínico y cambia estados de turnos.
-* `ROLE_PATIENT` — agenda turnos y consulta sus propios turnos.
+* `ROLE_PATIENT` — agenda turnos, cancela los propios y consulta su historial.
 
 ### Usuario administrador inicial
 
-Al arrancar, si no existe un usuario con el email configurado, `DataSeeder` crea un admin por defecto con valores configurables por variables de entorno:
+Al arrancar, si no existe un usuario con el email configurado, `DataSeeder` crea un admin. En el perfil `dev` hay valores por defecto; en `prod` es obligatorio definir las variables:
 
-| Variable | Default | Descripción |
+| Variable | Default (solo dev) | Descripción |
 | :--- | :--- | :--- |
 | `ADMIN_EMAIL` | `admin@smartclinic.local` | Email del admin inicial |
 | `ADMIN_PASSWORD` | `admin123` | Contraseña del admin inicial (cambiar en producción) |
@@ -73,20 +79,22 @@ Al arrancar, si no existe un usuario con el email configurado, `DataSeeder` crea
 
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/auth/login` | Inicia sesión y devuelve un JWT | `200 OK` / `400 Bad Request` |
+| **POST** | `/api/auth/login` | Inicia sesión y devuelve un JWT | `200` / `400` / `401` |
 
 ### 📅 Turnos (`/api/appointments`)
 
-| Método | Endpoint | Descripción | Estado HTTP |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/appointments` | Agenda un nuevo turno médico (Paciente) | `201 Created` / `400 Bad Request` / `409 Conflict` |
-| **GET** | `/api/appointments/patient/{patientId}` | Lista los turnos asignados a un paciente (Paciente) | `200 OK` |
-| **PATCH** | `/api/appointments/{id}/status` | Cambia el estado de un turno (Doctor/Admin) | `200 OK` / `400 Bad Request` / `409 Conflict` |
+| Método | Endpoint | Descripción | Rol | Estado HTTP |
+| :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/api/appointments` | Agenda un turno (usa el paciente del token) | Paciente | `201` / `400` / `404` / `409` |
+| **GET** | `/api/appointments/patient/{patientId}` | Turnos del propio paciente | Paciente | `200` / `403` |
+| **PATCH** | `/api/appointments/{id}/status` | Cambia el estado de un turno | Doctor/Admin | `200` / `400` / `404` / `409` |
+| **PATCH** | `/api/appointments/{id}/cancel` | Cancela el propio turno | Paciente | `200` / `403` / `404` |
+
+> **Seguridad:** en `POST /api/appointments` el `patientId` se toma del token, no del body. Un paciente no puede consultar ni cancelar turnos de otro paciente.
 
 #### Ejemplo de Cuerpo de Solicitud (`POST /api/appointments`)
 ```json
 {
-  "patientId": 8,
   "doctorId": 7,
   "appointmentDate": "2026-09-01T10:30:00",
   "reason": "Consulta general"
@@ -107,62 +115,128 @@ Estados válidos: `PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`.
 
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/users` | Crea un usuario | `201 Created` |
-| **GET** | `/api/users` | Lista usuarios | `200 OK` |
-| **GET** | `/api/users/{id}` | Usuario por id | `200 OK` |
-| **PUT** | `/api/users/{id}` | Actualiza usuario | `200 OK` |
-| **DELETE** | `/api/users/{id}` | Elimina usuario | `204 No Content` |
+| **POST** | `/api/users` | Crea un usuario | `201` / `409` |
+| **GET** | `/api/users` | Lista usuarios | `200` |
+| **GET** | `/api/users/{id}` | Usuario por id | `200` / `404` |
+| **PUT** | `/api/users/{id}` | Actualiza usuario | `200` / `404` / `409` |
+| **DELETE** | `/api/users/{id}` | Elimina usuario | `204` / `404` |
 
 ### 🩺 Médicos (`/api/doctors`)
 
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/doctors` | Crea un médico (Admin) | `201 Created` |
-| **GET** | `/api/doctors` | Lista médicos | `200 OK` |
-| **GET** | `/api/doctors/{id}` | Médico por id | `200 OK` |
-| **POST** | `/api/doctors/schedules` | Agrega horario a un médico (Admin) | `201 Created` |
-| **GET** | `/api/doctors/{id}/schedules` | Horarios de un médico | `200 OK` |
+| **POST** | `/api/doctors` | Crea un médico (Admin) | `201` / `404` / `409` |
+| **GET** | `/api/doctors` | Lista médicos | `200` |
+| **GET** | `/api/doctors/{id}` | Médico por id | `200` / `404` |
+| **POST** | `/api/doctors/schedules` | Agrega horario a un médico (Admin) | `201` / `400` / `404` |
+| **GET** | `/api/doctors/{id}/schedules` | Horarios de un médico | `200` |
 
 ### 🏷️ Especialidades (`/api/specialties`)
 
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/specialties` | Crea una especialidad (Admin) | `201 Created` |
-| **GET** | `/api/specialties` | Lista especialidades | `200 OK` |
-| **GET** | `/api/specialties/{id}` | Especialidad por id | `200 OK` |
-| **DELETE** | `/api/specialties/{id}` | Elimina especialidad (Admin) | `204 No Content` |
+| **POST** | `/api/specialties` | Crea una especialidad (Admin) | `201` / `409` |
+| **GET** | `/api/specialties` | Lista especialidades | `200` |
+| **GET** | `/api/specialties/{id}` | Especialidad por id | `200` / `404` |
+| **DELETE** | `/api/specialties/{id}` | Elimina especialidad (Admin) | `204` / `404` / `409` |
 
 ### 📋 Historial Clínico (`/api/medical-records`)
 
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/medical-records` | Crea un registro clínico (Doctor) | `201 Created` |
-| **GET** | `/api/medical-records` | Lista registros clínicos (Doctor/Admin) | `200 OK` |
-| **GET** | `/api/medical-records/appointment/{appointmentId}` | Registro por turno | `200 OK` |
+| **POST** | `/api/medical-records` | Crea un registro clínico (Doctor) | `201` / `404` / `409` |
+| **GET** | `/api/medical-records` | Lista registros clínicos (Doctor/Admin) | `200` |
+| **GET** | `/api/medical-records/appointment/{appointmentId}` | Registro por turno (staff o dueño) | `200` / `403` / `404` |
 
 ---
 
-## 📖 Documentación Interactiva
+## ⚠️ Manejo de Errores
 
-Con la aplicación corriendo, la documentación OpenAPI está disponible en:
+Todas las respuestas de error usan un JSON estándar:
 
-* Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-* Especificación JSON: `http://localhost:8080/v3/api-docs`
+```json
+{
+  "timestamp": "2026-09-30T23:15:16",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Usuario no encontrado con id: 99"
+}
+```
+
+| Código | Cuándo |
+| :--- | :--- |
+| `400` | Datos de entrada inválidos (validación, JSON malformado) |
+| `401` | Token ausente/inválido o credenciales incorrectas |
+| `403` | Autenticado sin permisos (rol o recurso ajeno) |
+| `404` | Recurso inexistente |
+| `409` | Conflicto (duplicados, doble reserva, regla de negocio) |
+| `500` | Error inesperado |
+
+---
+
+## ⚙️ Perfiles de Configuración
+
+* `application.properties` — configuración común (JPA, Actuator).
+* `application-dev.properties` — desarrollo local (defaults cómodos).
+* `application-prod.properties` — producción (sin defaults en secretos: si falta una variable, **no arranca**).
+* `application-test.properties` — tests de integración (BD provista por Testcontainers).
+
+Se elige con `SPRING_PROFILES_ACTIVE` (por defecto `dev`).
+
+| Variable | Descripción |
+| :--- | :--- |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Conexión a PostgreSQL |
+| `JWT_SECRET` | Clave HS256 (mínimo 32 bytes) |
+| `JWT_EXPIRATION_MS` | Duración del token (default 1 h en prod) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin inicial |
+| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos (separados por coma) |
 
 ---
 
 ## 🚀 Puesta en Marcha
 
+### Local (perfil `dev`)
+
 ```bash
-# Variables de entorno para la base de datos
 export DB_URL=jdbc:postgresql://localhost:5432/smartclinic_db
 export DB_USERNAME=postgres
 export DB_PASSWORD=tu_password
-
-# (Opcional) Credenciales del admin inicial
-export ADMIN_EMAIL=admin@smartclinic.local
-export ADMIN_PASSWORD=admin123
-
-# Ejecutar
 ./mvnw spring-boot:run
 ```
+
+### Docker (perfil `prod`)
+
+1. Copiá `.env.example` a `.env` y completá los valores (generá `JWT_SECRET` con `openssl rand -base64 48`).
+2. Levantá:
+
+```bash
+docker compose up -d --build
+docker compose ps
+curl http://localhost:8080/actuator/health
+```
+
+Flyway crea el esquema en el primer arranque. Los datos persisten en el volumen `pgdata`.
+
+---
+
+## 🧪 Tests
+
+```bash
+./mvnw test
+```
+
+* Tests unitarios (Mockito) de services y JwtUtil.
+* Tests de integración con **Testcontainers** (levantan un PostgreSQL efímero) para seguridad: `401` sin token, `401` credenciales malas, `403` por rol, `403` IDOR y `/actuator/health` público.
+
+> Requiere Docker corriendo. En algunos entornos con Docker muy nuevo, el `pom.xml` fija `api.version=1.43` para surefire.
+
+---
+
+## 📖 Documentación Interactiva
+
+Con la app corriendo:
+
+* Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+* Especificación JSON: `http://localhost:8080/v3/api-docs`
+
+> Swagger se deshabilita automáticamente en el perfil `prod`.

@@ -1,6 +1,7 @@
 package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.AppointmentResponseDTO;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Appointment;
 import com.smartclinic.api.model.Doctor;
 import com.smartclinic.api.model.DoctorSchedule;
@@ -9,6 +10,7 @@ import com.smartclinic.api.repository.AppointmentRepository;
 import com.smartclinic.api.repository.DoctorRepository;
 import com.smartclinic.api.repository.DoctorScheduleRepository;
 import com.smartclinic.api.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -58,12 +60,12 @@ public class AppointmentService {
 
         // 2. Validar que el paciente exista
         if (!userRepository.existsById(patientId)) {
-            throw new IllegalArgumentException("El paciente no existe.");
+            throw new ResourceNotFoundException("El paciente no existe.");
         }
 
         // 3. Validar que el médico exista y tenga disponibilidad ese día y horario
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new IllegalArgumentException("El médico no existe."));
+                .orElseThrow(() -> new ResourceNotFoundException("El médico no existe."));
         validateDoctorAvailability(doctor, appointmentDate);
 
         // 4. Validar que el médico no esté ocupado en ese horario
@@ -100,7 +102,7 @@ public class AppointmentService {
         }
 
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Turno no encontrado con id: " + appointmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + appointmentId));
 
         if (appointment.getStatus() == Appointment.Status.COMPLETED
                 || appointment.getStatus() == Appointment.Status.CANCELLED) {
@@ -112,6 +114,20 @@ public class AppointmentService {
 
         appointment.setStatus(status);
         return mapToDTO(appointmentRepository.save(appointment));
+    }
+
+    /**
+     * Cancela un turno validando que pertenezca al paciente autenticado.
+     */
+    public AppointmentResponseDTO cancelOwnAppointment(Long appointmentId, Long patientId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + appointmentId));
+
+        if (!appointment.getPatientId().equals(patientId)) {
+            throw new AccessDeniedException("No puede cancelar un turno de otro paciente.");
+        }
+
+        return updateAppointmentStatus(appointmentId, Appointment.Status.CANCELLED);
     }
 
     private void validateDoctorAvailability(Doctor doctor, LocalDateTime appointmentDate) {

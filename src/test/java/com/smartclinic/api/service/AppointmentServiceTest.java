@@ -1,6 +1,7 @@
 package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.AppointmentResponseDTO;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Appointment;
 import com.smartclinic.api.model.Doctor;
 import com.smartclinic.api.model.DoctorSchedule;
@@ -73,7 +74,7 @@ class AppointmentServiceTest {
         LocalDateTime future = LocalDateTime.now().plusDays(1);
         when(userRepository.existsById(1L)).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> appointmentService.scheduleAppointment(1L, 1L, future, "Consulta"));
     }
 
@@ -170,7 +171,7 @@ class AppointmentServiceTest {
     void updateAppointmentStatus_shouldThrow_whenNotFound() {
         when(appointmentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> appointmentService.updateAppointmentStatus(99L, Appointment.Status.CONFIRMED));
     }
 

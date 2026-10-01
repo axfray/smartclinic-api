@@ -33,6 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .username(email)
                 .password(user.getPasswordHash())
                 .authorities(user.getRole() != null ? user.getRole().name() : "ROLE_PATIENT")
+                .disabled(Boolean.FALSE.equals(user.getIsActive()))
                 .build();
     }
 }

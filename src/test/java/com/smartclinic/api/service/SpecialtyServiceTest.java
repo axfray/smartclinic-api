@@ -2,6 +2,8 @@ package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.SpecialtyRequestDTO;
 import com.smartclinic.api.dto.SpecialtyResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Specialty;
 import com.smartclinic.api.repository.SpecialtyRepository;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ class SpecialtyServiceTest {
         dto.setName("Cardiología");
         when(specialtyRepository.existsByName("Cardiología")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> specialtyService.createSpecialty(dto));
+        assertThrows(ConflictException.class, () -> specialtyService.createSpecialty(dto));
     }
 
     @Test
@@ -54,6 +56,6 @@ class SpecialtyServiceTest {
     void getSpecialtyById_shouldThrow_whenNotFound() {
         when(specialtyRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> specialtyService.getSpecialtyById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> specialtyService.getSpecialtyById(99L));
     }
 }

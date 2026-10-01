@@ -2,6 +2,8 @@ package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.SpecialtyRequestDTO;
 import com.smartclinic.api.dto.SpecialtyResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Specialty;
 import com.smartclinic.api.repository.SpecialtyRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class SpecialtyService {
 
     public SpecialtyResponseDTO createSpecialty(SpecialtyRequestDTO dto) {
         if (specialtyRepository.existsByName(dto.getName())) {
-            throw new IllegalArgumentException("Ya existe una especialidad con ese nombre.");
+            throw new ConflictException("Ya existe una especialidad con ese nombre.");
         }
 
         Specialty specialty = Specialty.builder()
@@ -39,13 +41,13 @@ public class SpecialtyService {
 
     public SpecialtyResponseDTO getSpecialtyById(Long id) {
         Specialty specialty = specialtyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Especialidad no encontrada con id: " + id));
         return mapToDTO(specialty);
     }
 
     public void deleteSpecialty(Long id) {
         if (!specialtyRepository.existsById(id)) {
-            throw new IllegalArgumentException("Especialidad no encontrada con id: " + id);
+            throw new ResourceNotFoundException("Especialidad no encontrada con id: " + id);
         }
         specialtyRepository.deleteById(id);
     }

@@ -2,6 +2,8 @@ package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.MedicalRecordRequestDTO;
 import com.smartclinic.api.dto.MedicalRecordResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Appointment;
 import com.smartclinic.api.model.MedicalRecord;
 import com.smartclinic.api.repository.AppointmentRepository;
@@ -36,7 +38,7 @@ class MedicalRecordServiceTest {
         dto.setAppointmentId(99L);
         when(appointmentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> medicalRecordService.createRecord(dto));
+        assertThrows(ResourceNotFoundException.class, () -> medicalRecordService.createRecord(dto));
     }
 
     @Test
@@ -47,7 +49,7 @@ class MedicalRecordServiceTest {
         when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
         when(medicalRecordRepository.findByAppointmentId(1L)).thenReturn(Optional.of(new MedicalRecord()));
 
-        assertThrows(IllegalArgumentException.class, () -> medicalRecordService.createRecord(dto));
+        assertThrows(ConflictException.class, () -> medicalRecordService.createRecord(dto));
     }
 
     @Test

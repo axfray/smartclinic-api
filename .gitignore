@@ -1,11 +1,9 @@
 HELP.md
+.env
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
-# Credenciales locales (no versionar la config de la base de datos)
-src/main/resources/application.properties
 
 ### STS ###
 .apt_generated

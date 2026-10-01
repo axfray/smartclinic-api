@@ -6,6 +6,7 @@ import com.smartclinic.api.model.User;
 import com.smartclinic.api.repository.UserRepository;
 import com.smartclinic.api.security.JwtUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -70,7 +71,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("nadie@mail.com")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(dto));
+        assertThrows(BadCredentialsException.class, () -> authService.login(dto));
     }
 
     @Test
@@ -89,7 +90,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail("admin@smartclinic.local")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("incorrecta", "encodedHash")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(dto));
+        assertThrows(BadCredentialsException.class, () -> authService.login(dto));
     }
 
     @Test

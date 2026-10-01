@@ -9,10 +9,14 @@ API RESTful para la gestión integral de turnos médicos y sincronización de pa
 - **Lenguaje:** Java 21
 - **Framework:** Spring Boot 3.2.3
 - **Persistencia:** Spring Data JPA + PostgreSQL
+- **Migraciones:** Flyway (`src/main/resources/db/migration`, `ddl-auto=validate`)
 - **Seguridad:** Spring Security + JWT (jjwt). Acceso por roles con `@PreAuthorize` y `@EnableMethodSecurity`
-- **Documentación:** SpringDoc OpenAPI (Swagger UI en `/swagger-ui/index.html`)
+- **Observabilidad:** Spring Boot Actuator (`/actuator/health`, `/actuator/info`)
+- **Documentación:** SpringDoc OpenAPI (Swagger UI en `/swagger-ui/index.html`; deshabilitado en `prod`)
 - **Build Tool:** Maven (wrapper incluido)
 - **Librería:** Lombok
+- **Contenedores:** Docker + Docker Compose
+- **Tests:** JUnit 5 + Mockito + Testcontainers (PostgreSQL efímero)
 
 ## Arquitectura
 
@@ -62,17 +66,26 @@ com.smartclinic.api/
 │   ├── *ResponseDTO.java            # DTOs de salida
 │   └── ErrorResponseDTO.java        # DTO de error
 └── exception/
-    └── GlobalExceptionHandler.java  # Manejo global de excepciones
+    ├── GlobalExceptionHandler.java  # Manejo global de excepciones (400/401/403/404/409/500)
+    ├── ResourceNotFoundException.java
+    └── ConflictException.java
 ```
+
+Recursos de configuración:
+- `src/main/resources/application.properties` (común) + `application-dev/prod.properties` (perfiles) + `application-test.properties` (tests)
+- `src/main/resources/db/migration/V1__init.sql`, `V2__seed_specialties.sql`
+- `Dockerfile`, `docker-compose.yml`, `.env.example` (raíz)
 
 ## Endpoints
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/auth/login` | Login JWT (200) |
-| POST | `/api/appointments` | Agenda un nuevo turno (201) |
-| GET | `/api/appointments/patient/{patientId}` | Turnos de un paciente (200) |
-| PATCH | `/api/appointments/{id}/status` | Cambia estado de un turno (200) |
+| POST | `/api/auth/login` | Login JWT (200 / 401) |
+| GET | `/actuator/health` | Health check público (200) |
+| POST | `/api/appointments` | Agenda un turno (usa el paciente del token) (201) |
+| GET | `/api/appointments/patient/{patientId}` | Turnos del propio paciente (200 / 403) |
+| PATCH | `/api/appointments/{id}/status` | Cambia estado de un turno (Doctor/Admin) (200) |
+| PATCH | `/api/appointments/{id}/cancel` | Cancela el propio turno (Paciente) (200 / 403) |
 | POST | `/api/users` | Crea un usuario (201) |
 | GET | `/api/users` | Lista usuarios (200) |
 | GET | `/api/users/{id}` | Usuario por id (200) |
@@ -93,7 +106,7 @@ com.smartclinic.api/
 
 ## Base de Datos
 
-El `schema.sql` define 6 tablas, todas implementadas en Java:
+El esquema se versiona con Flyway (`V1__init.sql`) y define 6 tablas, todas implementadas en Java:
 
 - `users` — Usuarios con roles (ROLE_PATIENT, ROLE_DOCTOR, ROLE_ADMIN)
 - `specialties` — Especialidades médicas
@@ -114,17 +127,20 @@ Notas de mapeo:
 ## Comandos
 
 ```bash
-# Ejecutar la aplicación
+# Ejecutar la aplicación (perfil dev por defecto)
 ./mvnw spring-boot:run
 
 # Compilar
 ./mvnw clean compile
 
-# Ejecutar tests
+# Ejecutar tests (los de integración requieren Docker para Testcontainers)
 ./mvnw test
 
 # Empaquetar JAR
 ./mvnw clean package -DskipTests
+
+# Levantar todo con Docker (perfil prod; requiere .env)
+docker compose up -d --build
 ```
 
 ## Convenciones del Proyecto
@@ -138,7 +154,10 @@ Notas de mapeo:
 
 ## Notas Importantes
 
-1. **Seguridad JWT:** `SecurityConfig` protege todo `/api/**` (excepto `/api/auth/**` y Swagger) y valida tokens JWT con roles vía `@PreAuthorize`. `DataSeeder` crea el admin inicial (`ADMIN_EMAIL`/`ADMIN_PASSWORD`, defaults `admin@smartclinic.local`/`admin123`).
-2. **`ddl-auto=update`:** Hibernate puede alterar el esquema (p.ej. cambiar tipos de columna) al arrancar.
-3. **Tests unitarios:** Existen tests unitarios para los services (Appointment, User, Doctor, Specialty, MedicalRecord, Auth) y JwtUtil usando Mockito. Solo el test de contexto (`contextLoads`) conecta a la base PostgreSQL real.
-4. **Swagger disponible:** Documentación OpenAPI en `/swagger-ui/index.html` cuando la app está corriendo.
+1. **Seguridad JWT:** `SecurityConfig` protege todo `/api/**` (excepto `/api/auth/**`, Swagger y `/actuator/health`) y valida tokens JWT con roles vía `@PreAuthorize`. CORS configurado desde `cors.allowed-origins`. `DataSeeder` crea el admin inicial (`ADMIN_EMAIL`/`ADMIN_PASSWORD`).
+2. **Perfiles:** `dev` (defaults locales), `prod` (sin defaults en secretos → fail-fast) y `test` (Testcontainers). Se eligen con `SPRING_PROFILES_ACTIVE`.
+3. **Esquema con Flyway:** `ddl-auto=validate`; los cambios de esquema se hacen con migraciones nuevas en `db/migration` (no con Hibernate).
+4. **Autorización por recurso:** el `patientId` se toma del token (no del body); paciente no puede leer turnos/historial de otro (evita IDOR).
+5. **Tests:** unitarios (Mockito) para services y JwtUtil + tests de integración con Testcontainers (`AuthIntegrationTest`, `AuthorizationIntegrationTest`) que requieren Docker. El `pom.xml` fija `api.version=1.43` en surefire por compatibilidad con Docker moderno.
+6. **Swagger:** disponible en `/swagger-ui/index.html` en `dev`; deshabilitado en `prod`.
+7. **Docker:** `Dockerfile` multi-stage + `docker-compose.yml` (api + postgres). Secretos en `.env` (no versionado).

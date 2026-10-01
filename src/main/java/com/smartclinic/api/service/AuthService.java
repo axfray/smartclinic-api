@@ -5,6 +5,8 @@ import com.smartclinic.api.dto.LoginRequestDTO;
 import com.smartclinic.api.model.User;
 import com.smartclinic.api.repository.UserRepository;
 import com.smartclinic.api.security.JwtUtil;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,14 +26,18 @@ public class AuthService {
     public AuthResponseDTO login(LoginRequestDTO dto) {
         if (dto == null || dto.getEmail() == null || dto.getEmail().isBlank()
                 || dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Credenciales inválidas.");
+             throw new IllegalArgumentException("Credenciales inválidas.");
         }
 
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas."));
+                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas."));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Credenciales inválidas.");
+             throw new BadCredentialsException("Credenciales inválidas.");
+        }
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+             throw new DisabledException("El usuario está desactivado.");
         }
 
         String token = jwtUtil.generateToken(user.getEmail());

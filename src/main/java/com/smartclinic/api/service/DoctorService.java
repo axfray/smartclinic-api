@@ -4,6 +4,8 @@ import com.smartclinic.api.dto.DoctorRequestDTO;
 import com.smartclinic.api.dto.DoctorResponseDTO;
 import com.smartclinic.api.dto.DoctorScheduleRequestDTO;
 import com.smartclinic.api.dto.DoctorScheduleResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Doctor;
 import com.smartclinic.api.model.DoctorSchedule;
 import com.smartclinic.api.model.Specialty;
@@ -43,13 +45,13 @@ public class DoctorService {
             throw new IllegalArgumentException("El userId es obligatorio.");
         }
         if (doctorRepository.existsByLicenseNumber(dto.getLicenseNumber())) {
-            throw new IllegalArgumentException("Ya existe un médico con esa matrícula.");
+            throw new ConflictException("Ya existe un médico con esa matrícula.");
         }
 
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id: " + dto.getUserId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + dto.getUserId()));
         Specialty specialty = specialtyRepository.findById(dto.getSpecialtyId())
-                .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + dto.getSpecialtyId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Especialidad no encontrada con id: " + dto.getSpecialtyId()));
 
         Doctor doctor = Doctor.builder()
                 .user(user)
@@ -69,14 +71,14 @@ public class DoctorService {
 
     public DoctorResponseDTO getDoctorById(Long id) {
         Doctor doctor = doctorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Médico no encontrado con id: " + id));
         return mapToDTO(doctor);
     }
 
     @Transactional
     public DoctorScheduleResponseDTO addSchedule(DoctorScheduleRequestDTO dto) {
         Doctor doctor = doctorRepository.findById(dto.getDoctorId())
-                .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado con id: " + dto.getDoctorId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Médico no encontrado con id: " + dto.getDoctorId()));
 
         if (dto.getDayOfWeek() == null || dto.getDayOfWeek() < 1 || dto.getDayOfWeek() > 7) {
             throw new IllegalArgumentException("dayOfWeek debe estar entre 1 (Lunes) y 7 (Domingo).");

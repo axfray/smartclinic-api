@@ -4,6 +4,8 @@ import com.smartclinic.api.dto.DoctorRequestDTO;
 import com.smartclinic.api.dto.DoctorResponseDTO;
 import com.smartclinic.api.dto.DoctorScheduleRequestDTO;
 import com.smartclinic.api.dto.DoctorScheduleResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.Doctor;
 import com.smartclinic.api.model.DoctorSchedule;
 import com.smartclinic.api.model.Specialty;
@@ -58,7 +60,7 @@ class DoctorServiceTest {
         dto.setLicenseNumber("M-123");
         when(doctorRepository.existsByLicenseNumber("M-123")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> doctorService.createDoctor(dto));
+        assertThrows(ConflictException.class, () -> doctorService.createDoctor(dto));
     }
 
     @Test
@@ -98,7 +100,7 @@ class DoctorServiceTest {
         dto.setDoctorId(99L);
         when(doctorRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> doctorService.addSchedule(dto));
+        assertThrows(ResourceNotFoundException.class, () -> doctorService.addSchedule(dto));
     }
 
     @Test

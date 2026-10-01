@@ -2,6 +2,8 @@ package com.smartclinic.api.service;
 
 import com.smartclinic.api.dto.UserRequestDTO;
 import com.smartclinic.api.dto.UserResponseDTO;
+import com.smartclinic.api.exception.ConflictException;
+import com.smartclinic.api.exception.ResourceNotFoundException;
 import com.smartclinic.api.model.User;
 import com.smartclinic.api.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +25,7 @@ public class UserService {
 
     public UserResponseDTO createUser(UserRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Ya existe un usuario con ese email.");
+            throw new ConflictException("El email ya está en uso por otro usuario:" + dto.getEmail());
         }
 
         User user = User.builder()
@@ -47,17 +49,23 @@ public class UserService {
 
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+        return mapToDTO(user);
+    }
+
+    public UserResponseDTO getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
         return mapToDTO(user);
     }
 
     public UserResponseDTO updateUser(Long id, UserRequestDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
 
         if (dto.getEmail() != null && !dto.getEmail().equalsIgnoreCase(user.getEmail())
                 && userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Ya existe un usuario con ese email.");
+            throw new ConflictException("El email ya está en uso por otro usuario:" + dto.getEmail()); 
         }
 
         if (dto.getFirstName() != null) {
@@ -84,7 +92,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("Usuario no encontrado con id: " + id);
+            throw new ResourceNotFoundException("Usuario no encontrado con id: " + id);
         }
         userRepository.deleteById(id);
     }
