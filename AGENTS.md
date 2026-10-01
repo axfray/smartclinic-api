@@ -143,6 +143,13 @@ Notas de mapeo:
 docker compose up -d --build
 ```
 
+## Spec-Driven Development (SDD)
+
+- Antes de tocar código, lee `docs/constitution.md` y la spec activa (`specs/NNN-*/`).
+- Flujo: Constitución → Spec → Clarificación → Plan → Tareas → Implementación → Validación → Cambio. No se avanza de fase sin aprobación del usuario.
+- Comandos disponibles: `/sdd-constitution`, `/sdd-spec`, `/sdd-clarify`, `/sdd-plan`, `/sdd-tasks`, `/sdd-implement`, `/sdd-validate`, `/sdd-change`, `/sdd-status` (skill `sdd`).
+- Tests: `./mvnw test`.
+
 ## Convenciones del Proyecto
 
 - Entidades JPA usan Lombok: `@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`
