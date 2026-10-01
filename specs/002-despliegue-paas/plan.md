@@ -6,6 +6,8 @@
 - `src/main/java/.../config/DatabaseUrlEnvironmentPostProcessor.java`: convierte `DATABASE_URL` (`postgresql://user:pass@host:port/db`, formato Render) a una URL JDBC sin credenciales, porque PostgreSQL JDBC no acepta credenciales en la URL (RF-4).
 - `src/main/resources/META-INF/spring.factories`: registra el `EnvironmentPostProcessor`.
 - `Dockerfile`: agregar `HEALTHCHECK` contra `/actuator/health` (RF-6).
+- `src/main/java/.../exception/GlobalExceptionHandler.java`: mapear `NoResourceFoundException` a 404 (RF-8).
+- `src/main/java/.../config/SecurityConfig.java`: permitir las rutas de Swagger solo si `springdoc.swagger-ui.enabled=true` (RF-6).
 - `.github/workflows/ci.yml`: job que corre `./mvnw test` en push y PR a `main` (RF-2, RF-3).
 - `render.yaml`: blueprint con web service (Docker) + Postgres + variables de entorno (RF-4).
 - `README.md`: sección "Despliegue en Render" con variables, pasos y smoke test (RF-5, RF-7).
@@ -21,6 +23,7 @@
 ## Estrategia de tests con ./mvnw test
 - El pipeline reutiliza los tests existentes (unitarios + Testcontainers).
 - Unitario nuevo: `DatabaseUrlEnvironmentPostProcessorTest` cubre la conversión `postgres://`/`postgresql://` → JDBC, puerto por defecto, query string y valores inválidos.
+- Integración nuevo: ruta permitida inexistente (`/api/auth/does-not-exist`) → 404 (RF-8).
 - Verificación local de RF-1: arrancar con `PORT=9000` y comprobar que escucha en 9000; sin `PORT`, en 8080.
 - Verificación de RF-6: `curl -f http://localhost:8080/actuator/health` → 200.
 
@@ -29,5 +32,6 @@
 - RF-2, RF-3: `.github/workflows/ci.yml`.
 - RF-4: `render.yaml`.
 - RF-5: sección de despliegue en `README.md`.
-- RF-6: health público + Swagger off en `prod` (ya existente) + `HEALTHCHECK`.
+- RF-6: health público + Swagger no público en `prod` + `HEALTHCHECK`.
 - RF-7: `CORS_ALLOWED_ORIGINS` (ya existente, documentado).
+- RF-8: handler de `NoResourceFoundException` + test de ruta inexistente.

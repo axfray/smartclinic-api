@@ -24,8 +24,9 @@ La API ya es production-ready a nivel código (perfiles dev/prod/test, Dockerfil
 - RF-3: SI los tests fallan, ENTONCES el pipeline de integración continua falla y no se despliega.
 - RF-4: EL SISTEMA incluye una definición de infraestructura como código que describe el servicio web y la base de datos administrada.
 - RF-5: EL SISTEMA documenta las variables de entorno requeridas y los pasos de despliegue con una verificación de humo.
-- RF-6: MIENTRAS el perfil `prod` está activo, EL SISTEMA expone `/actuator/health` como health check y mantiene la documentación interactiva deshabilitada.
+- RF-6: MIENTRAS el perfil `prod` está activo, EL SISTEMA expone `/actuator/health` como health check y no permite acceso anónimo a la documentación interactiva.
 - RF-7: EL SISTEMA acepta CORS únicamente desde los orígenes configurados en `CORS_ALLOWED_ORIGINS`.
+- RF-8: SI el cliente pide una ruta inexistente bajo un prefijo público, ENTONCES EL SISTEMA devuelve 404 (no 500).
 
 ## Requisitos no funcionales
 - Ningún secreto versionado en el repositorio.
@@ -36,6 +37,7 @@ La API ya es production-ready a nivel código (perfiles dev/prod/test, Dockerfil
 - `PORT` ausente: la app usa 8080 (desarrollo local).
 - Sin dominio de frontend todavía: `CORS_ALLOWED_ORIGINS` acepta un valor placeholder configurable.
 - Primer despliegue con base vacía: Flyway crea el esquema y el sembrador crea el admin.
+- Ruta inexistente bajo un prefijo público (p. ej. `/api/auth/x` o `/v3/api-docs` en `prod`): 404 o 401, nunca 500.
 
 ## Fuera de alcance
 - Rate limiting en el login.
@@ -47,6 +49,7 @@ La API ya es production-ready a nivel código (perfiles dev/prod/test, Dockerfil
 - Tests en verde en local y en integración continua.
 - `/actuator/health` responde 200 en el PaaS.
 - El login del admin funciona en el entorno desplegado.
+- Las rutas inexistentes públicas responden 404 y la documentación no es anónima en `prod`.
 
 ## Dudas abiertas
 - Ninguna. Plataforma elegida: Render; rama de deploy: `main`.

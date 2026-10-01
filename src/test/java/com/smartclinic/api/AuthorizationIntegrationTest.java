@@ -66,6 +66,12 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void unknownPermittedPath_returnsNotFound() throws Exception {
+        mockMvc.perform(get("/api/auth/does-not-exist"))
+                .andExpect(status().isNotFound());
+    }
+
     private void createPatientIfMissing(String email) {
         if (userRepository.findByEmail(email).isEmpty()) {
             userRepository.save(User.builder()
