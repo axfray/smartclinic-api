@@ -3,8 +3,8 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 
 ## Estado actual
 - API Spring Boot 3.2 / Java 21 con JWT + roles, PostgreSQL, Flyway y Actuator.
-- Producción-ready: perfiles dev/prod/test, Docker (Dockerfile + compose) y 52 tests (unitarios + Testcontainers).
-- Corre en Docker local (api healthy). Pendiente: deploy a VPS (Nginx + HTTPS + backups) y CI.
+- Producción-ready: perfiles dev/prod/test, Docker (Dockerfile + compose) y 56 tests (unitarios + Testcontainers).
+- Deploy PaaS preparado (spec 002): `render.yaml` (web + Postgres), CI en GitHub Actions, `server.port=${PORT:8080}` y conversión de `DATABASE_URL` a JDBC. Pendiente: crear el Blueprint en Render y mergear a `main`.
 
 ## Decisiones (y por qué)
 - Esquema con Flyway + `ddl-auto=validate` (nunca `update`): control y reproducibilidad.
@@ -19,6 +19,6 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - Los archivos de perfil van en `src/main/resources/`, no dentro de `db/migration/`.
 
 ## Próximos pasos
-- Deploy a VPS (Fase 5: Nginx + HTTPS + backups).
-- CI con GitHub Actions que corra `./mvnw test`.
-- Implementar la primera spec SDD: `specs/001-paginacion-listados/`.
+- Mergear `feat/produccion-mvp` a `main` y crear el Blueprint en Render (spec 002).
+- Verificar en Render: health 200, login 200 y Swagger 404 en `prod`.
+- Implementar `specs/001-paginacion-listados/`.

@@ -217,6 +217,28 @@ curl http://localhost:8080/actuator/health
 
 Flyway crea el esquema en el primer arranque. Los datos persisten en el volumen `pgdata`.
 
+### Render (PaaS)
+
+El repo incluye `render.yaml` (infraestructura como código) que crea el web service y una base PostgreSQL administrada.
+
+1. En Render: **New → Blueprint** y conectá el repositorio (rama `main`).
+2. Render pedirá los secretos marcados con `sync: false`: `ADMIN_EMAIL` y `ADMIN_PASSWORD`.
+3. Ajustá `CORS_ALLOWED_ORIGINS` en el dashboard al dominio del frontend (por defecto `https://example.com`).
+4. Primer deploy: Flyway crea el esquema y `DataSeeder` crea el admin.
+
+Verificación:
+
+```bash
+curl -f https://<tu-servicio>.onrender.com/actuator/health
+curl -X POST https://<tu-servicio>.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"<ADMIN_EMAIL>","password":"<ADMIN_PASSWORD>"}'
+```
+
+> Render entrega la base como `postgresql://...`; la app la convierte a JDBC usando `DATABASE_URL`. Si preferís pasar la URL completa, definí `DB_URL` con el prefijo `jdbc:`.
+
+**Plan free:** el web service se duerme tras 15 min de inactividad (despierta en ~1 min) y la base de datos expira a los 30 días. Para producción real, subí ambos a un plan pago.
+
 ---
 
 ## 🧪 Tests

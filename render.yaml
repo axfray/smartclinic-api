@@ -1,0 +1,50 @@
+# Blueprint de Render para SmartClinic API (infraestructura como código).
+# Referencia: https://render.com/docs/blueprint-spec
+#
+# No se versionan secretos: los valores sensibles usan `sync: false` (Render los
+# pide en el dashboard) o `generateValue: true` (Render los genera).
+#
+# La app compone la URL JDBC a partir de DATABASE_URL (Render la entrega como
+# `postgresql://...`); ver application-prod.properties.
+
+services:
+  - type: web
+    name: smartclinic-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smartclinic-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: smartclinic-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: smartclinic-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "3600000"
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://example.com
+
+databases:
+  - name: smartclinic-db
+    plan: free
+    region: oregon
+    databaseName: smartclinic_db
+    user: smartclinic
