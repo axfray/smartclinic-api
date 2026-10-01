@@ -25,4 +25,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     // Listar turnos de un paciente
     List<Appointment> findByPatientId(Long patientId);
+
+    // Listar turnos de un médico
+    List<Appointment> findByDoctorId(Long doctorId);
 }

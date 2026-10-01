@@ -80,13 +80,16 @@ Al arrancar, si no existe un usuario con el email configurado, `DataSeeder` crea
 | Método | Endpoint | Descripción | Estado HTTP |
 | :--- | :--- | :--- | :--- |
 | **POST** | `/api/auth/login` | Inicia sesión y devuelve un JWT | `200` / `400` / `401` |
+| **GET** | `/api/auth/me` | Datos del usuario autenticado (id, rol, `doctorId`) | `200` / `401` |
 
 ### 📅 Turnos (`/api/appointments`)
 
 | Método | Endpoint | Descripción | Rol | Estado HTTP |
 | :--- | :--- | :--- | :--- | :--- |
 | **POST** | `/api/appointments` | Agenda un turno (usa el paciente del token) | Paciente | `201` / `400` / `404` / `409` |
+| **GET** | `/api/appointments` | Lista todos los turnos | Admin | `200` / `403` |
 | **GET** | `/api/appointments/patient/{patientId}` | Turnos del propio paciente | Paciente | `200` / `403` |
+| **GET** | `/api/appointments/doctor/{doctorId}` | Agenda del médico | Doctor dueño / Admin | `200` / `403` |
 | **PATCH** | `/api/appointments/{id}/status` | Cambia el estado de un turno | Doctor/Admin | `200` / `400` / `404` / `409` |
 | **PATCH** | `/api/appointments/{id}/cancel` | Cancela el propio turno | Paciente | `200` / `403` / `404` |
 
@@ -147,6 +150,18 @@ Estados válidos: `PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`.
 | **POST** | `/api/medical-records` | Crea un registro clínico (Doctor) | `201` / `404` / `409` |
 | **GET** | `/api/medical-records` | Lista registros clínicos (Doctor/Admin) | `200` |
 | **GET** | `/api/medical-records/appointment/{appointmentId}` | Registro por turno (staff o dueño) | `200` / `403` / `404` |
+
+---
+
+## 🖥️ Interfaz web
+
+La API sirve una interfaz web mínima (JS vanilla, mismo origen) desde `/`:
+
+* **Paciente:** login, listar/agendar/cancelar sus turnos.
+* **Médico:** agenda, cambio de estado de turnos e historial clínico.
+* **Admin:** usuarios, especialidades, médicos, horarios y todos los turnos.
+
+No requiere CORS (mismo origen) ni build de frontend. En producción queda en `https://<tu-servicio>.onrender.com/`.
 
 ---
 

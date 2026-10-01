@@ -36,11 +36,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
-                auth.requestMatchers("/api/auth/**").permitAll();
+                auth.requestMatchers("/api/auth/login").permitAll();
                 if (swaggerEnabled) {
                     auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
                 }
                 auth.requestMatchers("/actuator/health").permitAll();
+                auth.requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll();
                 auth.anyRequest().authenticated();
             })
             .exceptionHandling(ex -> ex

@@ -1,0 +1,21 @@
+# Tareas 003 — Interfaz web mínima servida por la API
+
+- [x] **T1. `GET /api/auth/me`.** RF-4
+- Hecho cuando: devuelve id, rol, nombres y `doctorId` (si es médico); test unitario en verde.
+- [x] **T2. `GET /api/appointments` (admin).** RF-5
+- Hecho cuando: admin lista todos los turnos; paciente recibe 403.
+- [x] **T3. `GET /api/appointments/doctor/{doctorId}`.** RF-6
+- Hecho cuando: el médico dueño lista su agenda; otro médico recibe 403; admin puede.
+- [x] **T4. Permitir estáticos en `SecurityConfig`.** RF-9
+- Hecho cuando: `GET /` responde 200 sin token.
+- [x] **T5. UI base: login, logout, `/me` y 401.** RF-1, RF-7
+- Hecho cuando: tras login se muestra la vista del rol y al expirar el token se vuelve al login.
+- [x] **T6. UI paciente.** RF-3, RF-8
+- Hecho cuando: lista, agenda y cancela turnos propios.
+- [x] **T7. UI admin.** RF-5
+- Hecho cuando: gestiona usuarios, especialidades, médicos y horarios, y ve todos los turnos.
+- [x] **T8. UI médico.** RF-6
+- Hecho cuando: ve su agenda, cambia estados y carga/consulta historial.
+- [ ] **T9. Validación y despliegue.** RF-1..RF-9
+- Hecho cuando: `./mvnw test` verde; en Render `GET /` carga la UI y los flujos por rol funcionan.
+- Nota: 69 tests verdes en local; falta verificar `GET /` en Render tras el deploy.

@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -67,9 +68,41 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void unknownPermittedPath_returnsNotFound() throws Exception {
-        mockMvc.perform(get("/api/auth/does-not-exist"))
+    void unknownAuthenticatedPath_returnsNotFound() throws Exception {
+        String token = login("patientA@test.local");
+
+        mockMvc.perform(get("/api/does-not-exist").header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void index_isPublic() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void me_returnsCurrentUser() throws Exception {
+        String token = login("patientA@test.local");
+
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("patientA@test.local"))
+                .andExpect(jsonPath("$.role").value("ROLE_PATIENT"));
+    }
+
+    @Test
+    void me_withoutToken_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void patient_cannotListAllAppointments() throws Exception {
+        String token = login("patientA@test.local");
+
+        mockMvc.perform(get("/api/appointments").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 
     private void createPatientIfMissing(String email) {

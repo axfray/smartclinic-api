@@ -13,6 +13,7 @@ API RESTful para la gestión integral de turnos médicos y sincronización de pa
 - **Seguridad:** Spring Security + JWT (jjwt). Acceso por roles con `@PreAuthorize` y `@EnableMethodSecurity`
 - **Observabilidad:** Spring Boot Actuator (`/actuator/health`, `/actuator/info`)
 - **Documentación:** SpringDoc OpenAPI (Swagger UI en `/swagger-ui/index.html`; deshabilitado en `prod`)
+- **Interfaz web:** UI mínima en JS vanilla servida por la API en `/` (paciente, médico y admin)
 - **Build Tool:** Maven (wrapper incluido)
 - **Librería:** Lombok
 - **Contenedores:** Docker + Docker Compose
@@ -81,9 +82,12 @@ Recursos de configuración:
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | POST | `/api/auth/login` | Login JWT (200 / 401) |
+| GET | `/api/auth/me` | Datos del usuario autenticado (200 / 401) |
 | GET | `/actuator/health` | Health check público (200) |
 | POST | `/api/appointments` | Agenda un turno (usa el paciente del token) (201) |
+| GET | `/api/appointments` | Lista todos los turnos (Admin) (200 / 403) |
 | GET | `/api/appointments/patient/{patientId}` | Turnos del propio paciente (200 / 403) |
+| GET | `/api/appointments/doctor/{doctorId}` | Agenda del médico (Doctor dueño / Admin) (200 / 403) |
 | PATCH | `/api/appointments/{id}/status` | Cambia estado de un turno (Doctor/Admin) (200) |
 | PATCH | `/api/appointments/{id}/cancel` | Cancela el propio turno (Paciente) (200 / 403) |
 | POST | `/api/users` | Crea un usuario (201) |

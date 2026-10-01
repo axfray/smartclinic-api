@@ -162,6 +162,34 @@ public class AppointmentService {
     }
 
     /**
+     * Listar todos los turnos (uso administrativo).
+     */
+    public List<AppointmentResponseDTO> getAllAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Listar la agenda de un médico. Un médico solo puede ver la propia; un admin, cualquiera.
+     */
+    public List<AppointmentResponseDTO> getAppointmentsByDoctor(Long doctorId, Long currentUserId, boolean isAdmin) {
+        if (doctorId == null) {
+            throw new IllegalArgumentException("El doctorId es obligatorio.");
+        }
+        if (!isAdmin) {
+            Doctor doctor = doctorRepository.findByUserId(currentUserId)
+                    .orElseThrow(() -> new AccessDeniedException("El usuario no es un médico."));
+            if (!doctor.getId().equals(doctorId)) {
+                throw new AccessDeniedException("No puede consultar la agenda de otro médico.");
+            }
+        }
+        return appointmentRepository.findByDoctorId(doctorId).stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Método mapeador privado: Convierte una entidad Appointment a DTO.
      */
     private AppointmentResponseDTO mapToDTO(Appointment appointment) {

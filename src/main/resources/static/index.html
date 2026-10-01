@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartClinic</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>SmartClinic</h1>
+        <div id="session" class="session hidden">
+            <span id="session-user"></span>
+            <button id="logout" class="btn ghost" type="button">Salir</button>
+        </div>
+    </header>
+
+    <div id="message" class="message hidden"></div>
+
+    <main>
+        <section id="login-view" class="card login hidden">
+            <h2>Iniciar sesión</h2>
+            <form id="login-form">
+                <label>Email
+                    <input type="email" id="email" autocomplete="username" required>
+                </label>
+                <label>Contraseña
+                    <input type="password" id="password" autocomplete="current-password" required>
+                </label>
+                <button class="btn primary" type="submit">Entrar</button>
+            </form>
+        </section>
+
+        <section id="app-view" class="hidden">
+            <nav id="nav" class="nav"></nav>
+            <div id="content" class="content"></div>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

@@ -3,8 +3,9 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 
 ## Estado actual
 - API Spring Boot 3.2 / Java 21 con JWT + roles, PostgreSQL, Flyway y Actuator.
-- Producción-ready: perfiles dev/prod/test, Docker (Dockerfile + compose) y 57 tests (unitarios + Testcontainers).
+- Producción-ready: perfiles dev/prod/test, Docker (Dockerfile + compose) y 69 tests (unitarios + Testcontainers).
 - Desplegada en Render (spec 002): `render.yaml` (web + Postgres), CI en GitHub Actions, `server.port=${PORT:8080}`, conversión `DATABASE_URL`→JDBC, rutas inexistentes→404 y Swagger no público en `prod`.
+- UI web mínima servida por la API en `/` (spec 003): JS vanilla, mismo origen; endpoints `GET /api/auth/me`, `GET /api/appointments` (admin) y `GET /api/appointments/doctor/{id}`.
 
 ## Decisiones (y por qué)
 - Esquema con Flyway + `ddl-auto=validate` (nunca `update`): control y reproducibilidad.
@@ -19,6 +20,6 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - Los archivos de perfil van en `src/main/resources/`, no dentro de `db/migration/`.
 
 ## Próximos pasos
-- Ajustar `CORS_ALLOWED_ORIGINS` cuando exista el frontend.
 - Implementar `specs/001-paginacion-listados/`.
 - Opcional: subir `actions/checkout` y `actions/setup-java` a v5 (CI avisa deprecación) y desactivar `spring.jpa.open-in-view`.
+- `CORS_ALLOWED_ORIGINS` ya no es crítico (la UI es del mismo origen).

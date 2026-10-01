@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -232,6 +233,64 @@ class AppointmentServiceTest {
 
         assertThrows(IllegalStateException.class,
                 () -> appointmentService.updateAppointmentStatus(10L, Appointment.Status.PENDING));
+    }
+
+    @Test
+    void getAllAppointments_shouldReturnList() {
+        Appointment appointment = Appointment.builder()
+                .id(1L)
+                .patientId(5L)
+                .doctorId(1L)
+                .appointmentDate(LocalDateTime.now().plusDays(1))
+                .status(Appointment.Status.PENDING)
+                .build();
+        when(appointmentRepository.findAll()).thenReturn(List.of(appointment));
+
+        List<AppointmentResponseDTO> result = appointmentService.getAllAppointments();
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getAppointmentsByDoctor_shouldReturnList_forAdmin() {
+        Appointment appointment = Appointment.builder()
+                .id(1L)
+                .patientId(5L)
+                .doctorId(1L)
+                .appointmentDate(LocalDateTime.now().plusDays(1))
+                .status(Appointment.Status.PENDING)
+                .build();
+        when(appointmentRepository.findByDoctorId(1L)).thenReturn(List.of(appointment));
+
+        List<AppointmentResponseDTO> result = appointmentService.getAppointmentsByDoctor(1L, null, true);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getAppointmentsByDoctor_shouldReturnOwnAgenda_forDoctor() {
+        when(doctorRepository.findByUserId(9L)).thenReturn(Optional.of(Doctor.builder().id(1L).build()));
+        when(appointmentRepository.findByDoctorId(1L)).thenReturn(List.of());
+
+        List<AppointmentResponseDTO> result = appointmentService.getAppointmentsByDoctor(1L, 9L, false);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAppointmentsByDoctor_shouldThrow_whenDoctorRequestsOtherAgenda() {
+        when(doctorRepository.findByUserId(9L)).thenReturn(Optional.of(Doctor.builder().id(2L).build()));
+
+        assertThrows(AccessDeniedException.class,
+                () -> appointmentService.getAppointmentsByDoctor(1L, 9L, false));
+    }
+
+    @Test
+    void getAppointmentsByDoctor_shouldThrow_whenUserIsNotDoctor() {
+        when(doctorRepository.findByUserId(9L)).thenReturn(Optional.empty());
+
+        assertThrows(AccessDeniedException.class,
+                () -> appointmentService.getAppointmentsByDoctor(1L, 9L, false));
     }
 
     private Doctor doctorWithId(Long id) {
